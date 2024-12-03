@@ -1,0 +1,461 @@
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<link rel="shortcut icon" href="images/icon.ico">
+<style type="text/css">
+	body {
+		background-color: #0A0A2A;
+		color: #E0E0E0;
+	}
+
+	/* Hide both math displays initially, will display based on JS detection */
+  .mathjax-mobile, .mathml-non-mobile { display: none; }
+
+  /* Show the MathML content by default on non-mobile devices */
+  .show-mathml .mathml-non-mobile { display: block; }
+  .show-mathjax .mathjax-mobile { display: block; }
+
+	.content-margin-container {
+		display: flex;
+		font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+		width: 100%; /* Ensure the container is full width */
+		justify-content: left; /* Horizontally centers the children in the container */
+		align-items: center;  /* Vertically centers the children in the container */
+	}
+	.main-content-block {
+		width: 70%;
+		max-width: 1100px;
+		background:  #1a1a3c; /* Dark blue gradient */
+		border-left: 4px solid #5a8dbd;
+		border-right: 4px solid #5a8dbd;
+		margin: 0; /* Removes gaps between sections */
+		padding: 8px;
+		font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+		color: #E0E0E0;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	}
+	.margin-left-block {
+			font-size: 14px;
+			width: 15%; /* Change this percentage as needed */
+			max-width: 130px; /* Optional: Maximum width */
+			position: relative;
+			margin-left: 10px;
+			text-align: left;
+			font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+			padding: 5px;
+	}
+	.margin-right-block {
+			font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+			font-size: 14px;
+			width: 25%; /* Change this percentage as needed */
+			max-width: 256px; /* Optional: Maximum width */
+			position: relative;
+			text-align: left;
+			padding: 10px;  /* Optional: Adds padding inside the caption */
+	}
+
+	img {
+			max-width: 100%; /* Make sure it fits inside the container */
+			height: auto;
+			display: block;
+			margin: auto;
+	}
+	.my-video {
+			max-width: 100%; /* Make sure it fits inside the container */
+			height: auto;
+			display: block;
+			margin: auto;
+	}
+	/* Hide both video displays initially, will display based on JS detection */
+  .vid-mobile, .vid-non-mobile { display: none; }
+
+  /* Show the video content by default on non-mobile devices */
+  .show-vid-mobile .vid-mobile { display: block; }
+  .show-vid-non-mobile .vid-non-mobile { display: block; }
+
+	a:link,a:visited
+	{
+		color: #0e7862; /*#1367a7;*/
+		text-decoration: none;
+	}
+	a:hover {
+		color: #24b597; /*#208799;*/
+	}
+
+	h1 {
+		font-size: 30px;
+		font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Adds fallbacks */
+		margin-top: 4px;
+		margin-bottom: 10px;
+	}
+
+	table.header {
+    font-weight: 300;
+    font-size: 17px;
+    flex-grow: 1;
+		width: 70%;
+    max-width: calc(100% - 290px); /* Adjust according to the width of .paper-code-tab */
+	}
+	table td, table td * {
+	    vertical-align: middle;
+	    position: relative;
+	}
+	table.paper-code-tab {
+	    flex-shrink: 0;
+	    margin-left: 8px;
+	    margin-top: 8px;
+	    padding: 0px 0px 0px 8px;
+	    width: 290px;
+	    height: 150px;
+	}
+
+	.layered-paper { /* modified from: http://css-tricks.com/snippets/css/layered-paper/ */
+		box-shadow:
+		        0px 0px 1px 1px rgba(0,0,0,0.35), /* The top layer shadow */
+		        5px 5px 0 0px #fff, /* The second layer */
+		        5px 5px 1px 1px rgba(0,0,0,0.35), /* The second layer shadow */
+		        10px 10px 0 0px #fff, /* The third layer */
+		        10px 10px 1px 1px rgba(0,0,0,0.35); /* The third layer shadow */
+		margin-top: 5px;
+		margin-left: 10px;
+		margin-right: 30px;
+		margin-bottom: 5px;
+	}
+
+	hr {
+    height: 1px; /* Sets the height of the line to 1 pixel */
+    border: none; /* Removes the default border */
+    background-color: #DDD; /* Sets the line color to black */
+  }
+
+	div.hypothesis {
+		width: 80%;
+		background-color: #EEE;
+		border: 1px solid black;
+		border-radius: 10px;
+		-moz-border-radius: 10px;
+		-webkit-border-radius: 10px;
+		font-family: Roboto;
+		font-size: 18px;
+		text-align: center;
+		margin: auto;
+		padding: 16px 16px 16px 16px;
+	}
+
+	div.citation {
+    font-size: 0.8em;
+    background-color:#fff;
+    padding: 10px;
+		height: 200px;
+  }
+
+	.fade-in-inline {
+		position: absolute;
+		text-align: center;
+		margin: auto;
+		-webkit-mask-image: linear-gradient(to right,
+																			transparent 0%,
+																			transparent 40%,
+																			black 50%,
+																			black 90%,
+																			transparent 100%);
+		mask-image: linear-gradient(to right,
+																transparent 0%,
+																transparent 40%,
+																black 50%,
+																black 90%,
+																transparent 100%);
+		-webkit-mask-size: 8000% 100%;
+		mask-size: 8000% 100%;
+		animation-name: sweepMask;
+		animation-duration: 4s;
+		animation-iteration-count: infinite;
+		animation-timing-function: linear;
+		animation-delay: -1s;
+	}
+
+	.fade-in2-inline {
+			animation-delay: 1s;
+	}
+
+	.inline-div {
+			position: relative;
+	    display: inline-block; /* Makes both the div and paragraph inline-block elements */
+	    vertical-align: top; /* Aligns them at the top, you can adjust this to middle, bottom, etc., based on your needs */
+	    width: 50px; /* Optional: Adds space between the div and the paragraph */
+	}
+
+</style>
+
+	  <title>Geometric Algebra Transformers in the Wild!</title>
+      <meta property="og:title" content="The Platonic Representation Hypothesis" />
+			<meta charset="UTF-8">
+  </head>
+
+  <body>
+
+		<div class="content-margin-container">
+				<div class="margin-left-block">
+				</div>
+		    <div class="main-content-block">
+						<table class="header" align=left>
+								<tr>
+									<td colspan=4>
+										<span style="font-size: 32px; font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Adds fallbacks */">Investigating the Spatial Reasoning Capabilities of Geometric Algebra Transformers</span>
+									</td>
+								</tr>
+								<tr>
+										<td align=left>
+												<span style="font-size:17px"><a href="https://github.com/Ajay-M-create">Ajay Manicka</a></span>
+										</td>
+								<tr>
+									<td colspan=4 align=left><span style="font-size:18px">Final project for 6.7960, MIT</span></td>
+								</tr>
+						</table>
+					</div>
+					<div class="margin-right-block">
+					</div>
+		</div>
+
+		<div class="content-margin-container" id="intro">
+				<div class="margin-left-block">
+          <!-- table of contents here -->
+          <div style="position:fixed; max-width:inherit; top:max(20%,120px)">
+              <b style="font-size:16px">Outline</b><br><br>
+              <a href="#intro">Introduction</a><br><br>
+			  <a href="#background">Background</a><br><br>
+              <a href="#implications_and_limitations">Implications and limitations</a><br><br>
+          </div>
+				</div>
+		    <div class="main-content-block">
+            <!--You can embed an image like this:-->
+            <img src="./images/intro_graphic.jpg" width=800px/>
+		    </div>
+		    <!--div class="margin-right-block">
+						Caption for the image.
+		    </div:-->
+		</div>
+
+    <div class="content-margin-container" id="intro">
+				<div class="margin-left-block">
+				</div>
+		    <div class="main-content-block">
+						<h1>Introduction</h1>
+						Morphometric diffusion models generate realistic 3D anatomical structures by modeling clinically relevant features
+						like shape and size. An important application of these models is to give users control over desired features in
+						generated 3D anatomic shapes. For example, it may be important to have control over features (volume, shape, etc.)
+						of generated arteries when simulating coronary artery stent expansion.
+						<br><br>
+						Diffusion transformers can be used as the backbone of morphometric diffusion models since they model
+						complex relationships in large datasets <a href="#ref_1">[1]</a> as opposed to the standard U-net architecture.
+						They can be trained the learn the reverse diffusion process that the U-net would originally handle. While the authors demonstrate
+						success in generating realistic 3D shapes superior to the UNET architecture, it is not clear how these models perform on spatial reasoning tasks of increasing complexity.
+						Therefore, it is worth investigating if substituting the transformer backbone with a different architecture
+						will yield improved performance on spatial reasoning tasks.
+						<br><br>
+
+            <img src="./images/Diffusion_model.png" width=800px/>
+
+						<br><br>
+						One alternative architecture is the Geometric Algebra Transformer (GATr), which may improve spatial reasoning by directly representing data as multivectors
+						of the projective geometric algebra on complex shapes <a href="#ref_2">[2]</a>. Geometric algebra provides a structured framework that
+						could enhance the diffusion model's understanding of 3D morphology, enabling a more accurate representation of
+						complex structure. In the context of morphometric diffusion models, this could be useful for generating realistic 3D anatomic shapes which are intrinsically complex.
+						<br><br>
+						This project aims to investigate the spatial reasoning capabilities of GATrs by testing them on a variety of
+						geometric reasoning tasks. It aims to characterize how the GATr's geometric reasoning capability scales with problem complexity.
+						Here, we subject the GATr to a variety of challenging tasks that test its spatial reasoning capabilities compared to a standard transformer baseline. The official implementation extends the repository from <a href="#ref_3">[3]</a>
+						which itself is an extension of the original GATr implementation of <a href="#ref_2">[2]</a> to large biomedical meshes.
+						<br><br>
+						The official implementation can be found here
+		    </div>
+		    <div class="margin-right-block">
+						Figure 1. A diagram of the morphometric diffusion model architecture. The Morphometric Diffusion Model generates realistic geometries with desired features. It can use a transformer backbone instead of a classical U-net architecture in its reverse diffusion process to learn the denoising process.
+		    </div>
+		</div>
+
+		<div class="content-margin-container" id="background">
+			<div class="margin-left-block">
+			</div>
+
+		<div class="main-content-block">
+					<h1>Background and Literature Review</h1>
+
+		<h2>Geometric Algebra G(3,0,1)</h2>
+		Geometric Algebra provides a unified mathematical framework for representing and manipulating geometric objects and transformations.
+		The specific algebra G(3,0,1) used in <a href="#ref_1">[1]</a> is a 4-dimensional algebra that extends 3D Euclidean space with a homogeneous coordinate, enabling projective geometry operations.
+		In G(3,0,1), geometric objects like points, lines, and planes are represented as multivectors.<br><br>
+
+		The algebra provides natural operations for geometric transformations through the geometric product, which unifies inner and outer products.
+		This allows rotations, translations, and other transformations to be represented as elements of the algebra and applied through multiplication, rather than through matrices. The geometric product between vectors a and b is defined as:<br><br>
+
+          <center>
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <mrow>
+                <mi>a</mi>
+                <mi>b</mi>
+              </mrow>
+              <mo>=</mo>
+              <mrow>
+                <mi>a</mi>
+                <mo>&#x22C5;</mo>
+                <mi>b</mi>
+              </mrow>
+              <mo>+</mo>
+              <mrow>
+                <mi>a</mi>
+                <mo>&#x2227;</mo>
+                <mi>b</mi>
+              </mrow>
+            </math>
+          </center>
+
+
+		<p>where the first term is the inner product and the second term is the outer product. GATr is built on the geometric algebra G(3,0,1), which utilizes projective geometry by appending a fourth coordinate to 3D space. This allows translations to be expressed as linear maps. At its core, geometric algebra introduces an associative (but not commutative) geometric product of vectors y,z, denoted simply as yz.</p>
+
+		<p>Given a 4D orthogonal basis {e<sub>i</sub>}<sub>i</sub>, it holds that e<sub>0</sub>e<sub>0</sub> = 0, e<sub>i</sub>e<sub>i</sub> = 1 (i ≠ 0), and e<sub>i</sub>e<sub>j</sub> = -e<sub>j</sub>e<sub>i</sub> (i ≠ j). All possible linearly independent geometric products span a 16-dimensional vector space of multivectors x ∈ G(3,0,1), structured as:</p>
+
+		<p>x = (
+			<span style="color: #2020B0">x<sub>s</sub></span>,
+			<span style="color: #20B020">x<sub>0</sub>, x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub></span>,
+			<span style="color: #B02020">x<sub>01</sub>, x<sub>02</sub>, x<sub>03</sub>, x<sub>12</sub>, x<sub>13</sub>, x<sub>23</sub></span>,
+			<span style="color: #B0B020">x<sub>012</sub>, x<sub>013</sub>, x<sub>023</sub>, x<sub>123</sub></span>,
+			x<sub>0123</sub>)</p>
+
+		<p>where:</p>
+		<ul>
+			<li><span style="color: #2020B0">Scalar component</span></li>
+			<li><span style="color: #20B020">Vector components</span></li>
+			<li><span style="color: #B02020">Bivector components</span></li>
+			<li><span style="color: #B0B020">Trivector components</span></li>
+		</ul>
+
+		<p>Using this structure, different geometric objects can be represented as follows:</p>
+
+		<center>
+		<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
+			<thead>
+				<tr>
+					<th style="border: 1px solid white;">Geometric Object / Operation</th>
+					<th style="border: 1px solid white;">Multivector Mapping</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td style="border: 1px solid white;">Scalar s ∈ ℝ</td>
+					<td style="border: 1px solid white;">x<sub>s</sub> = s</td>
+				</tr>
+				<tr>
+					<td style="border: 1px solid white;">Plane with normal ν ∈ ℝ³ and offset δ ∈ ℝ</td>
+					<td style="border: 1px solid white;">(x<sub>0</sub>, x<sub>1</sub>, x<sub>2</sub>, x<sub>3</sub>) = (δ, ν)</td>
+				</tr>
+				<tr>
+					<td style="border: 1px solid white;">Point ρ ∈ ℝ³</td>
+					<td style="border: 1px solid white;">(x<sub>012</sub>, x<sub>013</sub>, x<sub>023</sub>, x<sub>123</sub>) = (ρ, 1)</td>
+				</tr>
+				<tr>
+					<td style="border: 1px solid white;">Translation τ ∈ ℝ³</td>
+					<td style="border: 1px solid white;">(x<sub>s</sub>, x<sub>01</sub>, x<sub>02</sub>, x<sub>03</sub>) = (1, ½τ)</td>
+				</tr>
+			</tbody>
+		</table>
+		</center>
+
+
+
+		<p>In this framework, both geometric objects and operations are represented as multivectors. Below, you can see visual examples of different multivectors.</p>
+
+		<div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin: 20px 0;">
+			<div style="text-align: center; margin: 10px;">
+				<svg width="150" height="150" viewBox="-75 -75 150 150">
+					<!-- Vector -->
+					<line x1="0" y1="0" x2="50" y2="-30" stroke="#20B020" stroke-width="2" marker-end="url(#arrowhead)"/>
+					<defs>
+						<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+							<polygon points="0 0, 10 3.5, 0 7" fill="#20B020"/>
+						</marker>
+					</defs>
+					<text x="25" y="15" fill="#333" dominant-baseline="middle">Vector</text>
+				</svg>
+			</div>
+
+			<div style="text-align: center; margin: 10px;">
+				<svg width="150" height="150" viewBox="-75 -75 150 150">
+					<!-- Parallelogram -->
+					<polygon points="0,0 50,-20 70,20 20,40"
+						fill="#B02020" fill-opacity="0.2"
+						stroke="#B02020" stroke-width="2"/>
+					<text x="25" y="15" fill="#333" dominant-baseline="middle">Bivector</text>
+				</svg>
+			</div>
+
+			<div style="text-align: center; margin: 10px;">
+				<svg width="150" height="150" viewBox="-75 -75 150 150">
+					<!-- Parallelepiped -->
+					<path d="M0,0 L50,-20 L70,20 L20,40 Z M50,-20 L90,-30 L110,10 L70,20 Z M70,20 L110,10 L80,30 L20,40 Z"
+						fill="#B0B020" fill-opacity="0.2"
+						stroke="#B0B020" stroke-width="2"/>
+					<text x="25" y="15" fill="#333" dominant-baseline="middle">Trivector</text>
+				</svg>
+			</div>
+
+			<div style="text-align: center; margin: 10px;">
+				<svg width="150" height="150" viewBox="-75 -75 150 150">
+					<!-- Point -->
+					<circle cx="0" cy="0" r="5" fill="#2020B0"/>
+					<text x="10" y="15" fill="#333" dominant-baseline="middle">Scalar</text>
+				</svg>
+			</div>
+		</div>
+
+	</div>
+		</div>
+
+		<div class="content-margin-container">
+				<div class="margin-left-block">
+				</div>
+		    <div class="main-content-block">
+            <h1>Another section</h1>
+            In this section we embed a video:
+						<video class='my-video' loop autoplay muted style="width: 725px">
+								<source src="./images/mtsh.mp4" type="video/mp4">
+						</video>
+		    </div>
+		    <div class="margin-right-block">
+					A caption for the video could go here.
+		    </div>
+		</div>
+
+		<div class="content-margin-container" id="implications_and_limitations">
+				<div class="margin-left-block">
+				</div>
+		    <div class="main-content-block">
+						<h1>Implications and limitations</h1>
+						Let's end with some discussion of the implications and limitations.
+		    </div>
+		    <div class="margin-right-block">
+		    </div>
+		</div>
+
+		<div class="content-margin-container" id="citations">
+				<div class="margin-left-block">
+				</div>
+		    <div class="main-content-block">
+						<div class='citation' id="references" style="height:auto; background: transparent"><br>
+							<h1>References:</h1><br><br>
+							<a id="ref_1"></a>[1] <a href="https://openaccess.thecvf.com/content/ICCV2023/papers/Peebles_Scalable_Diffusion_Models_with_Transformers_ICCV_2023_paper.pdf">Scalable diffusion models with Transformers</a>, Peebles, William, and Saining Xie. "Scalable diffusion models with transformers." Proceedings of the IEEE/CVF International Conference on Computer Vision. 2023.<br><br>
+							<a id="ref_2"></a>[2] <a href="https://proceedings.neurips.cc/paper_files/paper/2023/file/6f6dd92b03ff9be7468a6104611c9187-Paper-Conference.pdf">Geometric Algebra Transformer</a>, Johann Brehmer, Pim De Haan, Sönke Behrends, and Taco S Cohen. "Geometric algebra transformer." Advances in Neural Information Processing Systems, 36, 2024.<br><br>
+							<a id="ref_3"></a>[3] <a href="https://github.com/sukjulian/lab-gatr">LaB-GATr</a>, Suk, Julian, Baris Imre, and Jelmer M. Wolterink. "LaB-GATr: geometric algebra transformers for large biomedical surface and volume meshes." International Conference on Medical Image Computing and Computer-Assisted Intervention. Cham: Springer Nature Switzerland, 2024.<br><br>
+						</div>
+		    </div>
+		    <div class="margin-right-block">
+            <!-- margin notes for reference block here -->
+		    </div>
+		</div>
+
+	</body>
+
+</html>
