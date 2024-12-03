@@ -364,55 +364,200 @@
 		</table>
 		</center>
 
-
-
 		<p>In this framework, both geometric objects and operations are represented as multivectors. Below, you can see visual examples of different multivectors.</p>
-
-		<div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin: 20px 0;">
-			<div style="text-align: center; margin: 10px;">
-				<svg width="150" height="150" viewBox="-75 -75 150 150">
-					<!-- Vector -->
-					<line x1="0" y1="0" x2="50" y2="-30" stroke="#20B020" stroke-width="2" marker-end="url(#arrowhead)"/>
-					<defs>
-						<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-							<polygon points="0 0, 10 3.5, 0 7" fill="#20B020"/>
-						</marker>
-					</defs>
-					<text x="25" y="15" fill="#333" dominant-baseline="middle">Vector</text>
-				</svg>
-			</div>
-
-			<div style="text-align: center; margin: 10px;">
-				<svg width="150" height="150" viewBox="-75 -75 150 150">
-					<!-- Parallelogram -->
-					<polygon points="0,0 50,-20 70,20 20,40"
-						fill="#B02020" fill-opacity="0.2"
-						stroke="#B02020" stroke-width="2"/>
-					<text x="25" y="15" fill="#333" dominant-baseline="middle">Bivector</text>
-				</svg>
-			</div>
-
-			<div style="text-align: center; margin: 10px;">
-				<svg width="150" height="150" viewBox="-75 -75 150 150">
-					<!-- Parallelepiped -->
-					<path d="M0,0 L50,-20 L70,20 L20,40 Z M50,-20 L90,-30 L110,10 L70,20 Z M70,20 L110,10 L80,30 L20,40 Z"
-						fill="#B0B020" fill-opacity="0.2"
-						stroke="#B0B020" stroke-width="2"/>
-					<text x="25" y="15" fill="#333" dominant-baseline="middle">Trivector</text>
-				</svg>
-			</div>
-
-			<div style="text-align: center; margin: 10px;">
-				<svg width="150" height="150" viewBox="-75 -75 150 150">
-					<!-- Point -->
-					<circle cx="0" cy="0" r="5" fill="#2020B0"/>
-					<text x="10" y="15" fill="#333" dominant-baseline="middle">Scalar</text>
-				</svg>
-			</div>
-		</div>
-
+	</div>
+	<div class="margin-right-block">
 	</div>
 		</div>
+
+		<div class="content-margin-container">
+			<div class="margin-left-block">
+			</div>
+			<div class="main-content-block">
+				<img src="./images/multivector_subplots.png" width=800px/>
+			</div>
+			<div class="margin-right-block">
+				Figure 2. Visual examples of multivectors in G(3,0,1). Representing geometric objects as multivectors simplifies the implementation of operations such as rotations,
+				translations, and projections, and allows easy operations between different shapes.
+			</div>
+		</div>
+
+		<!-- New Section: Simplifying Calculations with Geometric Algebra -->
+		<div class="content-margin-container" id="ga_calculation_example">
+			<div class="margin-left-block">
+			</div>
+		    <div class="main-content-block">
+				<h1>Simplifying Calculations with Geometric Algebra</h1>
+				<p>Representing both geometric shapes and operations using 16-dimensional multivectors in Geometric Algebra (GA) can significantly streamline complex calculations. This example illustrates how to rotate a bivector about a vector by 90 degrees using the GA approach.</p>
+
+				<h2>Example: 90-Degree Rotation of a Bivector</h2>
+
+				<h3>Step 1: Define the Vector and Bivector</h3>
+				<p><strong>Vector (Axis of Rotation):</strong>
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mrow>
+							<mi>v</mi>
+							<mo>=</mo>
+							<msub>
+								<mi>e</mi>
+								<mn>3</mn>
+							</msub>
+						</mrow>
+					</math>
+				</p>
+				<p><strong>Bivector:</strong>
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mrow>
+							<mi>B</mi>
+							<mo>=</mo>
+							<msub>
+								<mi>e</mi>
+								<mrow>
+									<mn>1</mn>
+									<mn>2</mn>
+								</mrow>
+							</msub>
+						</mrow>
+					</math>
+				</p>
+
+				<h3>Step 2: Create the Rotor for 90-Degree Rotation</h3>
+				<p>The rotor
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mi>R</mi>
+					</math>
+					for a 90-degree rotation about vector
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mi>v</mi>
+					</math>
+					is:
+				</p>
+				<center>
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mrow>
+							<mi>R</mi>
+							<mo>=</mo>
+							<mi>cos</mi>
+							<mrow>
+								<mo stretchy="false">(</mo>
+								<mrow>
+									<mn>45</mn>
+									<mo>&#xb0;</mo>
+								</mrow>
+								<mo stretchy="false">)</mo>
+							</mrow>
+							<mo>-</mo>
+							<msub>
+								<mi>e</mi>
+								<mn>3</mn>
+							</msub>
+							<mi>sin</mi>
+							<mrow>
+								<mo stretchy="false">(</mo>
+								<mrow>
+									<mn>45</mn>
+									<mo>&#xb0;</mo>
+								</mrow>
+								<mo stretchy="false">)</mo>
+							</mrow>
+							<mo>=</mo>
+							<mfrac>
+								<msqrt>
+									<mn>2</mn>
+								</msqrt>
+								<mn>2</mn>
+							</mfrac>
+							<mo>-</mo>
+							<msub>
+								<mi>e</mi>
+								<mn>3</mn>
+							</msub>
+							<mfrac>
+								<msqrt>
+									<mn>2</mn>
+								</msqrt>
+								<mn>2</mn>
+							</mfrac>
+						</mrow>
+					</math>
+				</center>
+
+				<h3>Step 3: Apply the Rotor to the Bivector</h3>
+				<p>The rotated bivector
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mrow>
+							<mi>B</mi>
+							<mo>&#x2032;</mo>
+							<mo>=</mo>
+							<mi>R</mi>
+							<mi>B</mi>
+							<msup>
+								<mi>R</mi>
+								<mrow>
+									<mo>-</mo>
+									<mn>1</mn>
+								</mrow>
+							</msup>
+						</mrow>
+					</math>
+					is obtained using the sandwich product:
+				</p>
+
+				<h3>Step 4: Simplify the Expression</h3>
+				<p>After performing the multiplication, the rotated bivector remains:</p>
+				<center>
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mrow>
+							<mi>B</mi>
+							<mo>&#x2032;</mo>
+							<mo>=</mo>
+							<msub>
+								<mi>e</mi>
+								<mrow>
+									<mn>1</mn>
+									<mn>2</mn>
+								</mrow>
+							</msub>
+						</mrow>
+					</math>
+				</center>
+				<p>This result aligns with geometric intuition, as rotating the bivector
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mrow>
+							<mi>e</mi>
+							<msub>
+								<mi></mi>
+								<mrow>
+									<mn>1</mn>
+									<mn>2</mn>
+								</mrow>
+							</msub>
+						</mrow>
+					</math>
+					about the vector
+					<math xmlns="http://www.w3.org/1998/Math/MathML">
+						<mi>e</mi>
+						<msub>
+							<mi></mi>
+							<mn>3</mn>
+						</msub>
+					</math>
+					by 90 degrees leaves it unchanged.
+				</p>
+
+				<h2>Advantages of the GA Approach</h2>
+				<ul>
+					<li><strong>Unified Representation:</strong> Multivectors encapsulate various geometric entities and transformations within a single framework.</li>
+					<li><strong>Simplified Calculations:</strong> The geometric product combines rotations and other transformations, reducing computational complexity.</li>
+					<li><strong>Intuitive Manipulation:</strong> Operations like rotations mirror geometric intuition directly within algebraic manipulations.</li>
+				</ul>
+			</div>
+			<div class="margin-right-block">
+				The advantages extend past just this example of a rotation, we can do projections, translations, and other operations easily with a unified framework.
+			</div>
+		</div>
+		<!-- End of New Section -->
+
 
 		<div class="content-margin-container">
 				<div class="margin-left-block">
@@ -455,6 +600,8 @@
             <!-- margin notes for reference block here -->
 		    </div>
 		</div>
+
+
 
 	</body>
 
