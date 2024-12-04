@@ -1,6 +1,6 @@
 # lab-gatr-exp
 
-Welcome to the **lab-gatr-exp** repository! This project implements state-of-the-art transformer and Graph Attention Network (GAT) models for advanced data analysis and machine learning tasks.
+Welcome to the **lab-gatr-exp** repository! This project implements state-of-the-art transformer and Geometric Algebra Transformer (GATr) models for advanced data analysis and machine learning tasks.
 
 ## Table of Contents
 
@@ -98,7 +98,7 @@ The `transformer_implemented.py` script initializes and trains a transformer mod
 
 ### Running GATr Implemented Model
 
-To execute the Graph Attention Network (GAT) model:
+To execute the Geometric Algebra Transformer (GATr) model:
 
 ```bash
 python models/GATr_implemented.py

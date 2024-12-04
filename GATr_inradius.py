@@ -150,7 +150,7 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
     tuple
         Training and testing losses.
     """
-    criterion = nn.MSELoss()
+    criterion = nn.L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
     # Learning rate scheduler to reduce LR on plateau

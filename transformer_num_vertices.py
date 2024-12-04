@@ -122,7 +122,7 @@ class TransformerRegressor(nn.Module):
         x = self.regressor(x).squeeze(-1)  # [batch_size]
         return x
 
-def train_model_transformer(model, train_loader, test_loader, epochs=50, lr=1e-3):
+def train_model_transformer(model, train_loader, test_loader, epochs=50, lr=1e-4):
     """
     Training loop for the TransformerRegressor model.
 
@@ -144,7 +144,7 @@ def train_model_transformer(model, train_loader, test_loader, epochs=50, lr=1e-3
     tuple
         Training and testing losses.
     """
-    criterion = nn.MSELoss()
+    criterion = nn.L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
     train_losses = []
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         train_loader,
         test_loader,
         epochs=50,
-        lr=1e-3
+        lr=1e-4
     )
     
     # Create the loss_curves directory if it doesn't exist
