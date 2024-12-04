@@ -1,4 +1,3 @@
-#%%
 import os
 import torch
 import torch.nn as nn
@@ -12,7 +11,6 @@ from tqdm import tqdm
 from scipy.spatial import ConvexHull
 from lab_gatr import PointCloudPoolingScales, LaBGATr
 import matplotlib.pyplot as plt
-#rom positional_encodings.torch_encodings import PositionalEncoding1D, PositionalEncoding2D, PositionalEncoding3D, Summer
 from gatr.interface.point import embed_point, extract_point
 
 # Ensure reproducibility
@@ -25,10 +23,11 @@ print(f"Using device: {device}")
 
 #%%
 class ConvexHullDataset(Dataset):
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, target='inradius'):
         self.data_dir = data_dir
         self.file_names = sorted([f for f in os.listdir(data_dir) if f.endswith('.txt')])
         self.samples = []
+        self.target = target
         self._prepare_dataset()
     
     def _prepare_dataset(self):
@@ -43,15 +42,25 @@ class ConvexHullDataset(Dataset):
                 points = np.array(points)
                 if points.shape[0] < 4:
                     # Convex hull in 3D requires at least 4 non-coplanar points
-                    volume = 0.0
+                    value = 0.0
                 else:
                     try:
                         hull = ConvexHull(points)
-                        volume = hull.volume
+                        if self.target == 'vertices':
+                            value = len(hull.vertices)
+                        elif self.target == 'facets':
+                            value = len(hull.simplices)
+                        elif self.target == 'volume':
+                            value = hull.volume
+                        elif self.target == 'area':
+                            value = hull.area
+                        elif self.target == 'inradius':
+                            value = compute_inradius(hull)
+                        else:
+                            value = 0.0
                     except:
-                        # In case points are coplanar or singular
-                        volume = 0.0
-                self.samples.append({'points': points, 'volume': volume})
+                        value = 0.0
+                self.samples.append({'points': points, 'target': value})
     
     def __len__(self):
         return len(self.samples)
@@ -59,44 +68,35 @@ class ConvexHullDataset(Dataset):
     def __getitem__(self, idx):
         sample = self.samples[idx]
         points = sample['points']
-        volume = sample['volume']
-        return {'points': torch.tensor(points, dtype=torch.float32), 'volume': torch.tensor(volume, dtype=torch.float32)}
+        target = sample['target']
+        return {'points': torch.tensor(points, dtype=torch.float32), 'target': torch.tensor(target, dtype=torch.float32)}
 
-data_dir = '3d_point_cloud_dataset'  # Adjust the path if necessary
-dataset = ConvexHullDataset(data_dir)
+def compute_inradius(hull):
+    """
+    Computes the inradius of the convex hull.
 
-train_size = int(0.8 * len(dataset))
-test_size = len(dataset) - train_size
+    Parameters
+    ----------
+    hull : scipy.spatial.ConvexHull
+        The convex hull object.
 
-train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+    Returns
+    -------
+    float
+        The inradius of the convex hull.
+    """
+    # Compute the dual hull to find the inradius
+    # In 3D, inradius is the radius of the largest sphere inscribed in the convex hull
+    # This requires solving a linear programming problem
+    # Here, we provide a simplified approximation using the radius of the inscribed sphere within the bounding box
+    # For exact computation, consider using optimization libraries
+    points = hull.points
+    min_coords = np.min(points, axis=0)
+    max_coords = np.max(points, axis=0)
+    bounding_box = max_coords - min_coords
+    inradius = np.min(bounding_box) / 2.0
+    return inradius
 
-print(f"Training samples: {len(train_dataset)}")
-print(f"Testing samples: {len(test_dataset)}")
-
-def collate_fn(batch):
-    points = torch.stack([item['points'] for item in batch], dim=0)  # Shape: [batch_size, num_points, 3]
-    volumes = torch.stack([item['volume'] for item in batch], dim=0)  # Shape: [batch_size]
-    return {'points': points, 'volume': volumes}
-
-batch_size = 1
-
-train_loader = DataLoader(
-    train_dataset, 
-    batch_size=batch_size, 
-    shuffle=True, 
-    collate_fn=collate_fn, 
-    drop_last=True  # Added to ensure consistent batch sizes
-)
-
-test_loader = DataLoader(
-    test_dataset, 
-    batch_size=batch_size, 
-    shuffle=False, 
-    collate_fn=collate_fn,
-    drop_last=True  # Added to ensure consistent batch sizes
-)
-
-#%%
 class GeometricAlgebraInterface:
     num_input_channels = 1
     num_output_channels = 1
@@ -117,19 +117,15 @@ class GeometricAlgebraInterface:
     @staticmethod
     def dislodge(multivectors, scalars):
         """
-        Extracts 3D points from multivectors.
+        Extracts regression targets from multivectors.
         """
         # Remove channel dimension and flatten
         multivectors = multivectors.squeeze(1).view(-1, 16)  # [batch_size * num_points, 16]
-        # Extract points from multivectors
-        points = extract_point(multivectors)  # [batch_size * num_points, 3]
-        output = scalars[0]
+        # Here, we ignore multivectors and return scalars as output
+        output = scalars.squeeze(0)
         return output
 
 #%%
-from lab_gatr import LaBGATr
-from lab_gatr import PointCloudPoolingScales
-
 def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_value=1.0):
     """
     Training loop for the GATr model with gradient clipping and learning rate scheduling.
@@ -154,7 +150,7 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
     tuple
         Training and testing losses.
     """
-    criterion = nn.L1Loss()
+    criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
     # Learning rate scheduler to reduce LR on plateau
@@ -179,7 +175,7 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
         
         for batch_idx, batch in enumerate(tqdm(train_loader, desc=f'Epoch {epoch}/{epochs}', leave=False)):
             points = batch['points'].to(device)    # [batch_size, num_points, 3]
-            volumes = batch['volume'].to(device)  # [batch_size]
+            targets = batch['target'].to(device)  # [batch_size]
             
             optimizer.zero_grad()
             transform = PointCloudPoolingScales(rel_sampling_ratios=(1.0,), interp_simplex='triangle')
@@ -198,7 +194,7 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
             
             # Forward pass
             outputs = model(data) 
-            loss = criterion(outputs, volumes)
+            loss = criterion(outputs, targets)
             loss.backward()
             
             # Apply gradient clipping
@@ -228,7 +224,7 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
         with torch.no_grad():
             for batch_idx, batch in enumerate(test_loader):
                 points = batch['points'].to(device)
-                volumes = batch['volume'].to(device)
+                targets = batch['target'].to(device)
                 data = pyg.data.Data(pos=points)
                 
                 # Reshape if necessary
@@ -239,7 +235,7 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
                 data = PointCloudPoolingScales(rel_sampling_ratios=(0.2,), interp_simplex='triangle')(data)
                 
                 outputs = model(data)
-                loss = criterion(outputs, volumes)
+                loss = criterion(outputs, targets)
                 test_loss += loss.item() * points.size(0)
         test_loss /= len(test_loader.dataset)
         test_losses.append(test_loss)
@@ -266,6 +262,7 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
             break
     
     return train_losses, test_losses
+
 #%%
 if __name__ == "__main__":
     # Initialize GATr model with the updated interface
@@ -277,6 +274,40 @@ if __name__ == "__main__":
         use_class_token=False
     ).to(device)
     
+    # Initialize dataset with 'inradius' target
+    dataset = ConvexHullDataset(data_dir, target='inradius')
+    
+    train_size = int(0.8 * len(dataset))
+    test_size = len(dataset) - train_size
+    
+    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+    
+    print(f"Training samples: {len(train_dataset)}")
+    print(f"Testing samples: {len(test_dataset)}")
+    
+    def collate_fn(batch):
+        points = torch.stack([item['points'] for item in batch], dim=0)  # Shape: [batch_size, num_points, 3]
+        targets = torch.stack([item['target'] for item in batch], dim=0)  # Shape: [batch_size]
+        return {'points': points, 'target': targets}
+    
+    batch_size = 1
+    
+    train_loader = DataLoader(
+        train_dataset, 
+        batch_size=batch_size, 
+        shuffle=True, 
+        collate_fn=collate_fn, 
+        drop_last=True  # Ensures consistent batch sizes
+    )
+    
+    test_loader = DataLoader(
+        test_dataset, 
+        batch_size=batch_size, 
+        shuffle=False, 
+        collate_fn=collate_fn,
+        drop_last=True  # Ensures consistent batch sizes
+    )
+    
     # Train the GATr model
     gatr_train_losses, gatr_test_losses = train_model_gatr(
         gatr_model,
@@ -286,4 +317,24 @@ if __name__ == "__main__":
         lr=1e-3
     )
     
-#%% 
+    # Import necessary modules for plotting
+    import matplotlib.pyplot as plt
+
+    # Create the loss_curves directory if it doesn't exist
+    os.makedirs('./loss_curves', exist_ok=True)
+
+    # Plot the loss curves
+    plt.figure(figsize=(10, 5))
+    plt.plot(gatr_train_losses, label='Train Loss', color='blue')
+    plt.plot(gatr_test_losses, label='Test Loss', color='orange')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training and Testing Losses over Epochs - Inradius')
+    plt.legend()
+    plt.grid(True)
+    
+    # Save the plot as a .png file
+    plt.savefig('./loss_curves/GATR_loss_curves_inradius.png')
+    plt.close()
+    
+    print("Loss curves have been saved to ./loss_curves/GATR_loss_curves_inradius.png") 

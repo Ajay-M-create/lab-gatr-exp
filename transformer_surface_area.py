@@ -1,4 +1,3 @@
-#%%
 import os
 import torch
 import torch.nn as nn
@@ -21,10 +20,11 @@ print(f"Using device: {device}")
 
 #%%
 class ConvexHullDataset(Dataset):
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, target='area'):
         self.data_dir = data_dir
         self.file_names = sorted([f for f in os.listdir(data_dir) if f.endswith('.txt')])
         self.samples = []
+        self.target = target
         self._prepare_dataset()
     
     def _prepare_dataset(self):
@@ -39,15 +39,25 @@ class ConvexHullDataset(Dataset):
                 points = np.array(points)
                 if points.shape[0] < 4:
                     # Convex hull in 3D requires at least 4 non-coplanar points
-                    volume = 0.0
+                    value = 0.0
                 else:
                     try:
                         hull = ConvexHull(points)
-                        volume = hull.volume
+                        if self.target == 'vertices':
+                            value = len(hull.vertices)
+                        elif self.target == 'facets':
+                            value = len(hull.simplices)
+                        elif self.target == 'volume':
+                            value = hull.volume
+                        elif self.target == 'area':
+                            value = hull.area
+                        elif self.target == 'inradius':
+                            value = compute_inradius(hull)
+                        else:
+                            value = 0.0
                     except:
-                        # In case points are coplanar or singular
-                        volume = 0.0
-                self.samples.append({'points': points, 'volume': volume})
+                        value = 0.0
+                self.samples.append({'points': points, 'target': value})
     
     def __len__(self):
         return len(self.samples)
@@ -55,11 +65,17 @@ class ConvexHullDataset(Dataset):
     def __getitem__(self, idx):
         sample = self.samples[idx]
         points = sample['points']
-        volume = sample['volume']
-        return {'points': torch.tensor(points, dtype=torch.float32), 'volume': torch.tensor(volume, dtype=torch.float32)}
+        target = sample['target']
+        return {'points': torch.tensor(points, dtype=torch.float32), 'target': torch.tensor(target, dtype=torch.float32)}
+
+def compute_inradius(hull):
+    # Placeholder for inradius computation
+    # Implementing exact inradius computation is complex
+    # Here, we return a dummy value; replace with actual computation if needed
+    return 1.0
 
 data_dir = '3d_point_cloud_dataset'  # Adjust the path if necessary
-dataset = ConvexHullDataset(data_dir)
+dataset = ConvexHullDataset(data_dir, target='area')
 
 train_size = int(0.8 * len(dataset))
 test_size = len(dataset) - train_size
@@ -71,8 +87,8 @@ print(f"Testing samples: {len(test_dataset)}")
 
 def collate_fn(batch):
     points = torch.stack([item['points'] for item in batch], dim=0)  # Shape: [batch_size, num_points, 3]
-    volumes = torch.stack([item['volume'] for item in batch], dim=0)  # Shape: [batch_size]
-    return {'points': points, 'volume': volumes}
+    targets = torch.stack([item['target'] for item in batch], dim=0)  # Shape: [batch_size]
+    return {'points': points, 'target': targets}
 
 batch_size = 1
 
@@ -127,7 +143,7 @@ def train_model_transformer(model, train_loader, test_loader, epochs=50, lr=1e-3
     tuple
         Training and testing losses.
     """
-    criterion = nn.L1Loss()
+    criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
     train_losses = []
@@ -140,24 +156,17 @@ def train_model_transformer(model, train_loader, test_loader, epochs=50, lr=1e-3
         # Initialize tqdm progress bar for batches
         batch_bar = tqdm(enumerate(train_loader, 1), desc=f"Epoch {epoch}/{epochs}", total=len(train_loader), leave=False)
         for batch_idx, batch in batch_bar:
-            # Extract 'points' and 'volume' from the batch
+            # Extract 'points' and 'target' from the batch
             points = batch['points'].to(device)    # [batch_size, num_points, 3]
-            volumes = batch['volume'].to(device)  # [batch_size]
+            targets = batch['target'].to(device)  # [batch_size]
 
             optimizer.zero_grad()
             outputs = model(points)                # [batch_size]
-            loss = criterion(outputs, volumes)
+            loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
 
             running_loss += loss.item() * points.size(0)
-
-            # Update tqdm with current prediction and target every 200 iterations
-            # if batch_idx % 200 == 0:
-            #    batch_bar.set_postfix({
-            #        "Predicted Volumes": f"{[f'{x:.4f}' for x in outputs.detach().cpu().numpy()]}",
-            #        "Expected Volumes": f"{[f'{x:.4f}' for x in volumes.detach().cpu().numpy()]}"
-            #      })
 
         epoch_loss = running_loss / len(train_loader.dataset)
         train_losses.append(epoch_loss)
@@ -168,9 +177,9 @@ def train_model_transformer(model, train_loader, test_loader, epochs=50, lr=1e-3
         with torch.no_grad():
             for batch in test_loader:
                 points = batch['points'].to(device)
-                volumes = batch['volume'].to(device)
+                targets = batch['target'].to(device)
                 outputs = model(points)
-                loss = criterion(outputs, volumes)
+                loss = criterion(outputs, targets)
                 test_loss += loss.item() * points.size(0)
         test_loss /= len(test_loader.dataset)
         test_losses.append(test_loss)
@@ -192,3 +201,22 @@ if __name__ == "__main__":
         epochs=50,
         lr=1e-3
     )
+    
+    # Create the loss_curves directory if it doesn't exist
+    os.makedirs('./loss_curves', exist_ok=True)
+    
+    # Plot the loss curves
+    plt.figure(figsize=(10, 5))
+    plt.plot(transformer_train_losses, label='Train Loss', color='blue')
+    plt.plot(transformer_test_losses, label='Test Loss', color='orange')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training and Testing Losses over Epochs - Surface Area')
+    plt.legend()
+    plt.grid(True)
+    
+    # Save the plot as a .png file
+    plt.savefig('./loss_curves/Transformer_loss_curves_surface_area.png')
+    plt.close()
+    
+    print("Loss curves have been saved to ./loss_curves/Transformer_loss_curves_surface_area.png") 
