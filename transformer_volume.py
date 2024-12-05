@@ -74,7 +74,7 @@ def collate_fn(batch):
     volumes = torch.stack([item['volume'] for item in batch], dim=0)  # Shape: [batch_size]
     return {'points': points, 'volume': volumes}
 
-batch_size = 1
+batch_size = 50
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
@@ -133,6 +133,8 @@ def train_model_transformer(model, train_loader, test_loader, epochs=50, lr=1e-4
     train_losses = []
     test_losses = []
 
+    pred_list = []
+    target_list = []
     for epoch in range(1, epochs + 1):
         model.train()
         running_loss = 0.0
@@ -149,7 +151,9 @@ def train_model_transformer(model, train_loader, test_loader, epochs=50, lr=1e-4
             loss = criterion(outputs, volumes)
             loss.backward()
             optimizer.step()
-
+            
+            pred_list.append(outputs.detach().cpu().numpy())
+            target_list.append(volumes.detach().cpu().numpy())
             running_loss += loss.item() * points.size(0)
 
             # Update tqdm with current prediction and target every 200 iterations
@@ -211,3 +215,26 @@ if __name__ == "__main__":
     plt.close()
     
     print("Loss curves have been saved to ./loss_curves/Transformer_loss_curves_task_volume.png")
+    
+    # Get predictions for the last epoch
+    transformer_model.eval()
+    predictions = []
+    targets = []
+    with torch.no_grad():
+        for batch in test_loader:
+            points = batch['points'].to(device)
+            volumes = batch['volume'].to(device)
+            outputs = transformer_model(points)
+            predictions.extend(outputs.cpu().numpy())
+            targets.extend(volumes.cpu().numpy())
+    
+    # Plot predicted vs actual volumes
+    plt.figure(figsize=(10, 5))
+    plt.scatter(targets, predictions, alpha=0.6)
+    plt.xlabel('Actual Volume')
+    plt.ylabel('Predicted Volume')
+    plt.title('Predicted vs Actual Volumes (Last Epoch)')
+    plt.plot([min(targets), max(targets)], [min(targets), max(targets)], 'r--')  # Diagonal line
+    plt.grid(True)
+    plt.savefig('./loss_curves/Transformer_predicted_vs_actual_volumes.png')
+    plt.close()

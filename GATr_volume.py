@@ -14,6 +14,7 @@ from lab_gatr import PointCloudPoolingScales, LaBGATr
 import matplotlib.pyplot as plt
 #rom positional_encodings.torch_encodings import PositionalEncoding1D, PositionalEncoding2D, PositionalEncoding3D, Summer
 from gatr.interface.point import embed_point, extract_point
+from gatr.interface import embed_point, extract_scalar
 
 # Ensure reproducibility
 torch.manual_seed(42)
@@ -120,10 +121,8 @@ class GeometricAlgebraInterface:
         Extracts 3D points from multivectors.
         """
         # Remove channel dimension and flatten
-        multivectors = multivectors.squeeze(1).view(-1, 16)  # [batch_size * num_points, 16]
-        # Extract points from multivectors
-        points = extract_point(multivectors)  # [batch_size * num_points, 3]
-        output = scalars[0]
+        # multivectors = multivectors.squeeze(1).view(-1, 16)  # [batch_size * num_points, 16]
+        output = torch.mean(extract_scalar(multivectors))
         return output
 
 #%%
@@ -176,11 +175,14 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
         # Save model weights for this epoch
         weights_path = os.path.join(weights_dir, f'gatr_epoch_{epoch}.pt')
         torch.save(model.state_dict(), weights_path)
-        
+        pred_list = []
+        target_list = []
         for batch_idx, batch in enumerate(tqdm(train_loader, desc=f'Epoch {epoch}/{epochs}', leave=False)):
             points = batch['points'].to(device)    # [batch_size, num_points, 3]
-            volumes = batch['volume'].to(device)  # [batch_size]
+            targets = batch['volume'].to(device)  # [batch_size]
             
+            points=points[:,0,0]
+            targets=points[:,0,0]
             optimizer.zero_grad()
             transform = PointCloudPoolingScales(rel_sampling_ratios=(1.0,), interp_simplex='triangle')
             data = pyg.data.Data(pos=points)  # Using 'points' directly
@@ -198,9 +200,10 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
             
             # Forward pass
             outputs = model(data) 
-            loss = criterion(outputs, volumes)
+            loss = criterion(outputs, targets)
             loss.backward()
-            
+            pred_list.append(outputs.detach().cpu().item())
+            target_list.append(targets.detach().cpu().item())
             # Apply gradient clipping
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_value)
             
@@ -228,7 +231,7 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
         with torch.no_grad():
             for batch_idx, batch in enumerate(test_loader):
                 points = batch['points'].to(device)
-                volumes = batch['volume'].to(device)
+                targets = batch['volume'].to(device)
                 data = pyg.data.Data(pos=points)
                 
                 # Reshape if necessary
@@ -236,10 +239,10 @@ def train_model_gatr(model, train_loader, test_loader, epochs=50, lr=1e-4, clip_
                     batch_size, num_points, _ = data.pos.shape
                     data.pos = data.pos.view(-1, 3)  # Flatten to [batch_size * num_points, 3]
                 
-                data = PointCloudPoolingScales(rel_sampling_ratios=(0.2,), interp_simplex='triangle')(data)
+                data = PointCloudPoolingScales(rel_sampling_ratios=(1,), interp_simplex='triangle')(data)
                 
                 outputs = model(data)
-                loss = criterion(outputs, volumes)
+                loss = criterion(outputs, targets)
                 test_loss += loss.item() * points.size(0)
         test_loss /= len(test_loader.dataset)
         test_losses.append(test_loss)

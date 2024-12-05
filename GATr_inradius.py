@@ -275,6 +275,7 @@ if __name__ == "__main__":
     ).to(device)
     
     # Initialize dataset with 'inradius' target
+    data_dir = '3d_point_cloud_dataset'  # Adjust the path if necessary
     dataset = ConvexHullDataset(data_dir, target='inradius')
     
     train_size = int(0.8 * len(dataset))
